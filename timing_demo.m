@@ -9,8 +9,9 @@
 
 %% Template design info
 % Set up a template structure in SPM batch format with basic info. 60 scans
-% at 2 sec TR = 2 minute experiment. TR, experiment duration, etc probably
-% need to be the same to compare efficiency values between designs
+% at 2 sec TR = 2 minute experiment. TR, experiment duration, trial
+% duration probably need to be the same to compare efficiency values
+% between designs
 clear template
 template{1}.spm.stats.fmri_design.timing.units = 'secs';
 template{1}.spm.stats.fmri_design.timing.RT = 2;
@@ -81,8 +82,28 @@ plot(SPM.xX.X(:,1))
 title(sprintf('Efficiency = %0.2f',eff))
 
 
-%% Case 3, random-ish ISI
+%% Case 3, "single event" type design
 tag = 3;
+onsets = [0 25 50 75 100];
+durations = repmat(3,size(onsets));
+
+% Same code as above for the rest
+matlabbatch = template;
+matlabbatch{1}.spm.stats.fmri_design.dir = {['spmdir' num2str(tag)]};
+matlabbatch{1}.spm.stats.fmri_design.sess.cond.name = 'Task';
+matlabbatch{1}.spm.stats.fmri_design.sess.cond.onset = onsets;
+matlabbatch{1}.spm.stats.fmri_design.sess.cond.duration = durations;
+spm_jobman('run',matlabbatch);
+load(fullfile(matlabbatch{1}.spm.stats.fmri_design.dir{1},'SPM.mat'));
+C = [1 0]';
+eff = trace( C'*inv(SPM.xX.X'*SPM.xX.X)*C )^-1;
+figure(tag); clf
+plot(SPM.xX.X(:,1))
+title(sprintf('Efficiency = %0.2f',eff))
+
+
+%% Case 4, random-ish ISI
+tag = 4;
 onsets = [0 3 10 15 18 25 41 45 52 55 78 100 103 106];
 durations = repmat(3,size(onsets));
 
@@ -99,4 +120,5 @@ eff = trace( C'*inv(SPM.xX.X'*SPM.xX.X)*C )^-1;
 figure(tag); clf
 plot(SPM.xX.X(:,1))
 title(sprintf('Efficiency = %0.2f',eff))
+
 
